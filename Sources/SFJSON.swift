@@ -54,7 +54,7 @@ public struct SFJSON {
         else if let _ = object as? NSDictionary {
             type = .dictionary
         }
-        print(type)
+//        print(type)
     }
     
     public static var null: SFJSON {
@@ -119,27 +119,27 @@ extension SFJSON: CustomStringConvertible {
 extension SFJSON {
     
     public var double: Double? {
-        return (self.object as? NSNumber)?.doubleValue
+        return (object as? NSNumber)?.doubleValue
     }
     
     public var doubleValue: Double {
-        return (self.object as? NSNumber)?.doubleValue ?? 0.0
+        return (object as? NSNumber)?.doubleValue ?? 0.0
     }
     
     public var int: Int? {
-        return (self.object as? NSNumber)?.intValue
+        return (object as? NSNumber)?.intValue
     }
     
     public var intValue: Int {
-        return (self.object as? NSNumber)?.intValue ?? 0
+        return (object as? NSNumber)?.intValue ?? 0
     }
     
     public var number: NSNumber? {
-        return self.object as? NSNumber
+        return object as? NSNumber
     }
     
     public var numberValue: NSNumber? {
-        return (self.object as? NSNumber) ?? NSNumber()
+        return (object as? NSNumber) ?? NSNumber()
     }
 }
 
@@ -149,12 +149,12 @@ extension SFJSON {
     
     //Optional bool
     public var bool: Bool? {
-        return (self.object as? NSNumber)?.boolValue
+        return (object as? NSNumber)?.boolValue
     }
     
     //Non-optional bool
     public var boolValue: Bool {
-        return (self.object as? NSNumber)?.boolValue ?? true
+        return (object as? NSNumber)?.boolValue ?? true
     }
 }
 
@@ -164,12 +164,46 @@ extension SFJSON {
     
     //Optional string
     public var string: String? {
-        return self.object as? String
+        return object as? String
 
     }
     
     //Non-optional string
     public var stringValue: String {
-        return self.object as? String ?? self.description
+        return object as? String ?? description
+    }
+}
+
+// MARK: - Array
+
+extension SFJSON {
+    
+    //Optional [JSON]
+    public var array: [SFJSON]? {
+        if type == .array {
+            return (object as! NSArray).map{SFJSON(object: $0)}
+        } else {
+            return nil
+        }
+    }
+    
+    //Optional [Any]
+    public var arrayObject: [Any]? {
+        return object as? [Any]
+    }
+}
+
+// MARK: - Dictionary
+
+extension SFJSON {
+    
+    //Optional [String : JSON]
+    public var dictionary: NSDictionary? {
+        return object as? NSDictionary
+    }
+    
+    //Optional [String : Any]
+    public var dictionaryObject: [String : Any]? {
+        return object as? [String: Any]
     }
 }
