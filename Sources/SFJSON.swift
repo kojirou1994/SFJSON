@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum SFJSONObjectType :Int{
+public enum SFJSONObjectType :Int {
     case number
     case string
     case array
@@ -18,9 +18,9 @@ public enum SFJSONObjectType :Int{
 
 public struct SFJSON {
     
-    private var object: Any
+    fileprivate var object: Any
     
-    private var type: SFJSONObjectType = .null
+    fileprivate var type: SFJSONObjectType = .null
     
     public init?(data:Data, options opt: JSONSerialization.ReadingOptions = .allowFragments) {
         do {
@@ -39,7 +39,7 @@ public struct SFJSON {
         }
     }
     
-    private init(object: Any) {
+    internal init(object: Any) {
         self.object = object
         if let _ = object as? NSNumber {
             type = .number
@@ -67,7 +67,7 @@ public struct SFJSON {
 extension SFJSON {
     public subscript(index: Int) -> SFJSON {
         if type == .array {
-            let array = object as! NSArray
+            let array = self.object as! NSArray
             if index>=0 && index < array.count {
                 return SFJSON(object: array[index])
             }
@@ -78,7 +78,7 @@ extension SFJSON {
     /// If `type` is `.Dictionary`, return json whose object is `dictionary[key]` , otherwise return null json with error.
     public subscript(key: String) -> SFJSON {
         if type == .dictionary {
-            let dictionary = object as! NSDictionary
+            let dictionary = self.object as! NSDictionary
             if let object = dictionary.object(forKey: key) {
                 return SFJSON(object: object)
             }
@@ -92,15 +92,15 @@ extension SFJSON {
 extension SFJSON: CustomStringConvertible {
     
     public var description: String {
-        return rawString() ?? "Null"
+        return rawString ?? ""
     }
     
-    public func rawString(_ encoding: String.Encoding = String.Encoding.utf8, options opt: JSONSerialization.WritingOptions = .prettyPrinted) -> String? {
+    public var rawString: String? {
         switch self.type {
         case .array, .dictionary:
             do {
-                let data = try JSONSerialization.data(withJSONObject: object, options: opt)
-                return String(data: data, encoding: encoding)
+                let data = try JSONSerialization.data(withJSONObject: object, options: .prettyPrinted)
+                return String(data: data, encoding: .utf8)
             } catch _ {
                 return nil
             }
@@ -109,7 +109,7 @@ extension SFJSON: CustomStringConvertible {
         case .number:
             return self.number?.stringValue
         case .null:
-            return "null"
+            return nil
         }
     }
 }
@@ -165,12 +165,11 @@ extension SFJSON {
     //Optional string
     public var string: String? {
         return object as? String
-
     }
     
     //Non-optional string
     public var stringValue: String {
-        return object as? String ?? description
+        return string ?? description
     }
 }
 
@@ -178,7 +177,7 @@ extension SFJSON {
 
 extension SFJSON {
     
-    //Optional [JSON]
+    //Optional [SFJSON]
     public var array: [SFJSON]? {
         if type == .array {
             return (object as! NSArray).map{SFJSON(object: $0)}
@@ -197,7 +196,7 @@ extension SFJSON {
 
 extension SFJSON {
     
-    //Optional [String : JSON]
+    //Optional NSDictionary
     public var dictionary: NSDictionary? {
         return object as? NSDictionary
     }

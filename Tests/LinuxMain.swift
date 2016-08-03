@@ -1,5 +1,5 @@
 import XCTest
-@testable import SFJSONTestSuite
+@testable import SFJSONTests
 
 XCTMain([
      testCase(SFJSONTests.allTests),
