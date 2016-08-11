@@ -9,10 +9,15 @@
 import Foundation
 
 public enum SFJSONObjectType :Int {
+    ///NSNumber
     case number
+    ///String
     case string
+    ///Array<Any>
     case array
+    ///Dictionary<String, Any>
     case dictionary
+    ///NSNull
     case null
 }
 
@@ -21,16 +26,24 @@ public struct SFJSON {
     fileprivate var object: Any
     
     fileprivate var type: SFJSONObjectType = .null
-    
-    public init?(data:Data, options opt: JSONSerialization.ReadingOptions = .allowFragments) {
+
+    /**
+     Creates a JSON using the data.
+     - parameter data:  The Data used to convert to json.Top level object in data is an NSArray or NSDictionary
+     - parameter opt:   The JSON serialization reading options. `.AllowFragments` by default.
+     - returns: The created JSON
+     */
+    public init?(data: Data, options opt: JSONSerialization.ReadingOptions = .allowFragments) {
         do {
             let object = try JSONSerialization.jsonObject(with: data, options: opt)
             self.init(object: object)
-        }catch {
+        }
+        catch {
+            // For now do nothing with the error
             return nil
         }
     }
-    
+
     public init?(jsonString: String) {
         if let data = jsonString.data(using: .utf8) {
             self.init(data: data)
@@ -48,17 +61,17 @@ public struct SFJSON {
         }else if let _ = object as? NSNull {
             type = .null
         }
-        else if let _ = object as? NSArray {
+        else if let _ = object as? [Any] {
             type = .array
         }
-        else if let _ = object as? NSDictionary {
+        else if let _ = object as? [String: Any] {
             type = .dictionary
         }
 //        print(type)
     }
     
     public static var null: SFJSON {
-        return SFJSON(object: NSDictionary())
+        return SFJSON(object: String())
     }
 }
 
@@ -67,7 +80,7 @@ public struct SFJSON {
 extension SFJSON {
     public subscript(index: Int) -> SFJSON {
         if type == .array {
-            let array = self.object as! NSArray
+            let array = self.object as! [Any]
             if index>=0 && index < array.count {
                 return SFJSON(object: array[index])
             }
@@ -78,16 +91,16 @@ extension SFJSON {
     /// If `type` is `.Dictionary`, return json whose object is `dictionary[key]` , otherwise return null json with error.
     public subscript(key: String) -> SFJSON {
         if type == .dictionary {
-            let dictionary = self.object as! NSDictionary
-            #if os(OSX)
-            if let object = dictionary.object(forKey: key) {
+            let dictionary = self.object as! [String: Any]
+//            #if os(OSX)
+            if let object = dictionary[key] {
                 return SFJSON(object: object)
             }
-            #else
-            if let object = dictionary.objectForKey(key as! AnyObject) {
-                return SFJSON(object: object)
-            }
-            #endif
+//            #else
+//            if let object = dictionary.objectForKey(key as! AnyObject) {
+//                return SFJSON(object: object)
+//            }
+//            #endif
         }
         return SFJSON.null
     }
@@ -103,13 +116,16 @@ extension SFJSON: CustomStringConvertible {
     
     public var rawString: String? {
         switch self.type {
-        case .array, .dictionary:
+        case .array:
             do {
-                #if os(OSX)
                 let data = try JSONSerialization.data(withJSONObject: object, options: .prettyPrinted)
-                #else
-                let data = try JSONSerialization.data(withJSONObject: object as! AnyObject, options: .prettyPrinted)
-                #endif
+                return String(data: data, encoding: .utf8)
+            } catch _ {
+                return nil
+            }
+        case .dictionary:
+            do {
+                let data = try JSONSerialization.data(withJSONObject: object, options: .prettyPrinted)
                 return String(data: data, encoding: .utf8)
             } catch _ {
                 return nil
@@ -188,7 +204,7 @@ extension SFJSON {
 extension SFJSON {
     
     //Optional [SFJSON]
-    public var array: [SFJSON]? {
+    public var arrayObject: [SFJSON]? {
         if type == .array {
             return (object as! NSArray).map{SFJSON(object: $0)}
         } else {
@@ -197,7 +213,7 @@ extension SFJSON {
     }
     
     //Optional [Any]
-    public var arrayObject: [Any]? {
+    public var array: [Any]? {
         return object as? [Any]
     }
 }
@@ -207,12 +223,12 @@ extension SFJSON {
 extension SFJSON {
     
     //Optional NSDictionary
-    public var dictionary: NSDictionary? {
+    public var dictionaryObject: NSDictionary? {
         return object as? NSDictionary
     }
     
     //Optional [String : Any]
-    public var dictionaryObject: [String : Any]? {
+    public var dictionary: [String : Any]? {
         return object as? [String: Any]
     }
 }
