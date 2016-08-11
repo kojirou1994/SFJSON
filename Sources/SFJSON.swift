@@ -84,7 +84,7 @@ extension SFJSON {
                 return SFJSON(object: object)
             }
             #else
-            if let object = dictionary.objectForKey(key) {
+            if let object = dictionary.objectForKey(key as NSString) {
                 return SFJSON(object: object)
             }
             #endif
@@ -149,7 +149,7 @@ extension SFJSON {
     }
     
     public var numberValue: NSNumber? {
-        return (object as? NSNumber) ?? NSNumber()
+        return (object as? NSNumber) ?? NSNumber(value: 0)
     }
 }
 
