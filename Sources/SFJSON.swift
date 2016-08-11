@@ -84,7 +84,7 @@ extension SFJSON {
                 return SFJSON(object: object)
             }
             #else
-            if let object = dictionary.objectForKey(key as NSString) {
+            if let object = dictionary.objectForKey(key as! AnyObject) {
                 return SFJSON(object: object)
             }
             #endif
