@@ -79,9 +79,15 @@ extension SFJSON {
     public subscript(key: String) -> SFJSON {
         if type == .dictionary {
             let dictionary = self.object as! NSDictionary
+            #if os(OSX)
             if let object = dictionary.object(forKey: key) {
                 return SFJSON(object: object)
             }
+            #else
+            if let object = dictionary.objectForKey(key) {
+                return SFJSON(object: object)
+            }
+            #endif
         }
         return SFJSON.null
     }
@@ -99,7 +105,11 @@ extension SFJSON: CustomStringConvertible {
         switch self.type {
         case .array, .dictionary:
             do {
+                #if os(OSX)
                 let data = try JSONSerialization.data(withJSONObject: object, options: .prettyPrinted)
+                #else
+                let data = try JSONSerialization.data(withJSONObject: object as! AnyObject, options: .prettyPrinted)
+                #endif
                 return String(data: data, encoding: .utf8)
             } catch _ {
                 return nil
