@@ -19,6 +19,8 @@ public enum SFJSONObjectType :Int {
     case dictionary
     ///NSNull
     case null
+    ///Bool
+    case bool
 }
 
 public struct SFJSON {
@@ -52,10 +54,19 @@ public struct SFJSON {
         }
     }
     
+    #if os(Linux)
     internal init(object: Any) {
         self.object = object
         if let _ = object as? NSNumber {
             type = .number
+        }else if let number = object as? Int {
+            type = .number
+            self.object = NSNumber(value: number)
+        }else if let number = object as? Double {
+            type = .number
+            self.object = NSNumber(value: number)
+        }else if let _ = object as? Bool {
+            type = .bool
         }else if let _ = object as? String {
             type = .string
         }else if let _ = object as? NSNull {
@@ -67,11 +78,30 @@ public struct SFJSON {
         else if let _ = object as? [String: Any] {
             type = .dictionary
         }
-//        print(type)
+            print(type)
     }
+    #else
+    internal init(object: Any) {
+        self.object = object
+        if let _ = object as? NSNumber {
+            type = .number
+        }else if let _ = object as? String {
+            type = .string
+        }else if let _ = object as? NSNull {
+            type = .null
+        }
+        else if let _ = object as? [AnyObject] {
+            type = .array
+        }
+        else if let _ = object as? [String: AnyObject] {
+            type = .dictionary
+        }
+        print(type)
+    }
+    #endif
     
     public static var null: SFJSON {
-        return SFJSON(object: String())
+        return SFJSON(object: NSNull())
     }
 }
 
@@ -80,7 +110,7 @@ public struct SFJSON {
 extension SFJSON {
     public subscript(index: Int) -> SFJSON {
         if type == .array {
-            let array = self.object as! [Any]
+            let array = self.array!
             if index>=0 && index < array.count {
                 return SFJSON(object: array[index])
             }
@@ -91,7 +121,7 @@ extension SFJSON {
     /// If `type` is `.Dictionary`, return json whose object is `dictionary[key]` , otherwise return null json with error.
     public subscript(key: String) -> SFJSON {
         if type == .dictionary {
-            let dictionary = self.object as! [String: Any]
+            let dictionary = self.dictionary!
 //            #if os(OSX)
             if let object = dictionary[key] {
                 return SFJSON(object: object)
@@ -106,6 +136,7 @@ extension SFJSON {
     }
 }
 
+/**
 // MARK: - Print
 
 extension SFJSON: CustomStringConvertible {
@@ -139,6 +170,7 @@ extension SFJSON: CustomStringConvertible {
         }
     }
 }
+*/
 
 // MARK: - Int, Double, Number
 
@@ -164,7 +196,7 @@ extension SFJSON {
         return object as? NSNumber
     }
     
-    public var numberValue: NSNumber? {
+    public var numberValue: NSNumber {
         return (object as? NSNumber) ?? NSNumber(value: 0)
     }
 }
@@ -172,15 +204,23 @@ extension SFJSON {
 // MARK: - Bool
 
 extension SFJSON {
-    
+    #if os(OSX)
     //Optional bool
     public var bool: Bool? {
-        return (object as? NSNumber)?.boolValue
+        if type == .number && number!.isBool {
+            return number!.boolValue
+        }
+        return nil
     }
+    #else
+    public var bool: Bool? {
+        return object as? Bool
+    }
+    #endif
     
     //Non-optional bool
     public var boolValue: Bool {
-        return (object as? NSNumber)?.boolValue ?? true
+        return bool ?? true
     }
 }
 
@@ -195,7 +235,7 @@ extension SFJSON {
     
     //Non-optional string
     public var stringValue: String {
-        return string ?? description
+        return string ?? ""
     }
 }
 
@@ -211,11 +251,17 @@ extension SFJSON {
             return nil
         }
     }
-    
+    #if os(Linux)
     //Optional [Any]
     public var array: [Any]? {
-        return object as? [Any]
+    return object as? [Any]
     }
+    #else
+    //Optional [AnyObject]
+    public var array: [AnyObject]? {
+        return object as? [AnyObject]
+    }
+    #endif
 }
 
 // MARK: - Dictionary
@@ -227,8 +273,15 @@ extension SFJSON {
         return object as? NSDictionary
     }
     
+    #if os(Linux)
     //Optional [String : Any]
     public var dictionary: [String : Any]? {
-        return object as? [String: Any]
+    return object as? [String: Any]
     }
+    #else
+    //Optional [String : AnyObject]
+    public var dictionary: [String : AnyObject]? {
+        return object as? [String: AnyObject]
+    }
+    #endif
 }
