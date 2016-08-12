@@ -136,15 +136,15 @@ extension SFJSON {
     }
 }
 
-/**
+
 // MARK: - Print
 
 extension SFJSON: CustomStringConvertible {
     
     public var description: String {
-        return rawString ?? ""
+        return self.stringValue
     }
-    
+    /***
     public var rawString: String? {
         switch self.type {
         case .array:
@@ -169,8 +169,9 @@ extension SFJSON: CustomStringConvertible {
             return nil
         }
     }
+    */
 }
-*/
+
 
 // MARK: - Int, Double, Number
 
