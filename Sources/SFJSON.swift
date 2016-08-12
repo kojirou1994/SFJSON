@@ -205,13 +205,11 @@ extension SFJSON {
 // MARK: - Bool
 
 extension SFJSON {
+    
     #if os(OSX)
     //Optional bool
     public var bool: Bool? {
-        if type == .number && number!.isBool {
-            return number!.boolValue
-        }
-        return nil
+        return number?.boolValue
     }
     #else
     public var bool: Bool? {
@@ -244,6 +242,24 @@ extension SFJSON {
 
 extension SFJSON {
     
+    #if os(Linux)
+    //Optional [Any]
+    public var array: [Any]? {
+        return object as? [Any]
+    }
+    //Optional [SFJSON]
+    public var arrayObject: [SFJSON]? {
+        if type == .array {
+            return (object as! [Any]).map{SFJSON(object: $0)}
+        } else {
+            return nil
+        }
+    }
+    #else
+    //Optional [AnyObject]
+    public var array: [AnyObject]? {
+        return object as? [AnyObject]
+    }
     //Optional [SFJSON]
     public var arrayObject: [SFJSON]? {
         if type == .array {
@@ -251,16 +267,6 @@ extension SFJSON {
         } else {
             return nil
         }
-    }
-    #if os(Linux)
-    //Optional [Any]
-    public var array: [Any]? {
-    return object as? [Any]
-    }
-    #else
-    //Optional [AnyObject]
-    public var array: [AnyObject]? {
-        return object as? [AnyObject]
     }
     #endif
 }
