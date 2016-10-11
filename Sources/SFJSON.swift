@@ -24,7 +24,7 @@ public enum SFJSONObjectType :Int {
 }
 
 public enum SFJSONError: Error {
-	case stringToDataNil
+	case invalidData
 }
 
 public struct SFJSON {
@@ -33,12 +33,6 @@ public struct SFJSON {
     
     fileprivate var type: SFJSONObjectType = .null
 
-    /**
-     Creates a JSON using the data.
-     - parameter data:  The Data used to convert to json.Top level object in data is an NSArray or NSDictionary
-     - parameter opt:   The JSON serialization reading options. `.AllowFragments` by default.
-     - returns: The created JSON
-     */
     public init(data: Data, options opt: JSONSerialization.ReadingOptions = .allowFragments) throws {
 		let object = try JSONSerialization.jsonObject(with: data, options: opt)
 		self.init(object: object)
@@ -48,7 +42,7 @@ public struct SFJSON {
         if let data = jsonString.data(using: .utf8) {
             try self.init(data: data)
         }else {
-            throw SFJSONError.stringToDataNil
+            throw SFJSONError.invalidData
         }
     }
 	

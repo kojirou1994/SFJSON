@@ -7,9 +7,6 @@
 //
 
 import Foundation
-public enum SFMongoError: Error {
-	case invalidData
-}
 
 public protocol JSONLiteralConvertible {
 	init(json: SFJSON) throws
