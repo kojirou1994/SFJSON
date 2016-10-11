@@ -23,6 +23,10 @@ public enum SFJSONObjectType :Int {
     case bool
 }
 
+public enum SFJSONError: Error {
+	case stringToDataNil
+}
+
 public struct SFJSON {
     
     fileprivate var object: Any
@@ -35,38 +39,23 @@ public struct SFJSON {
      - parameter opt:   The JSON serialization reading options. `.AllowFragments` by default.
      - returns: The created JSON
      */
-    public init?(data: Data, options opt: JSONSerialization.ReadingOptions = .allowFragments) {
-        do {
-            let object = try JSONSerialization.jsonObject(with: data, options: opt)
-            self.init(object: object)
-        }
-        catch {
-            // For now do nothing with the error
-            return nil
-        }
+    public init(data: Data, options opt: JSONSerialization.ReadingOptions = .allowFragments) throws {
+		let object = try JSONSerialization.jsonObject(with: data, options: opt)
+		self.init(object: object)
     }
 
-    public init?(jsonString: String) {
+    public init(jsonString: String) throws {
         if let data = jsonString.data(using: .utf8) {
-            self.init(data: data)
+            try self.init(data: data)
         }else {
-            return nil
+            throw SFJSONError.stringToDataNil
         }
     }
-    
-    #if os(Linux)
+	
     internal init(object: Any) {
         self.object = object
         if let _ = object as? NSNumber {
             type = .number
-        }else if let number = object as? Int {
-            type = .number
-            self.object = NSNumber(value: number)
-        }else if let number = object as? Double {
-            type = .number
-            self.object = NSNumber(value: number)
-        }else if let _ = object as? Bool {
-            type = .bool
         }else if let _ = object as? String {
             type = .string
         }else if let _ = object as? NSNull {
@@ -78,27 +67,8 @@ public struct SFJSON {
         else if let _ = object as? [String: Any] {
             type = .dictionary
         }
-            print(type)
+//        print(type)
     }
-    #else
-    internal init(object: Any) {
-        self.object = object
-        if let _ = object as? NSNumber {
-            type = .number
-        }else if let _ = object as? String {
-            type = .string
-        }else if let _ = object as? NSNull {
-            type = .null
-        }
-        else if let _ = object as? [AnyObject] {
-            type = .array
-        }
-        else if let _ = object as? [String: AnyObject] {
-            type = .dictionary
-        }
-        print(type)
-    }
-    #endif
     
     public static var null: SFJSON {
         return SFJSON(object: NSNull())
@@ -122,15 +92,9 @@ extension SFJSON {
     public subscript(key: String) -> SFJSON {
         if type == .dictionary {
             let dictionary = self.dictionary!
-//            #if os(OSX)
             if let object = dictionary[key] {
                 return SFJSON(object: object)
             }
-//            #else
-//            if let object = dictionary.objectForKey(key as! AnyObject) {
-//                return SFJSON(object: object)
-//            }
-//            #endif
         }
         return SFJSON.null
     }
@@ -205,17 +169,11 @@ extension SFJSON {
 // MARK: - Bool
 
 extension SFJSON {
-    
-    #if os(OSX)
+	
     //Optional bool
     public var bool: Bool? {
         return number?.boolValue
     }
-    #else
-    public var bool: Bool? {
-        return object as? Bool
-    }
-    #endif
     
     //Non-optional bool
     public var boolValue: Bool {
@@ -241,24 +199,10 @@ extension SFJSON {
 // MARK: - Array
 
 extension SFJSON {
-    
-    #if os(Linux)
+
     //Optional [Any]
     public var array: [Any]? {
         return object as? [Any]
-    }
-    //Optional [SFJSON]
-    public var arrayObject: [SFJSON]? {
-        if type == .array {
-            return (object as! [Any]).map{SFJSON(object: $0)}
-        } else {
-            return nil
-        }
-    }
-    #else
-    //Optional [AnyObject]
-    public var array: [AnyObject]? {
-        return object as? [AnyObject]
     }
     //Optional [SFJSON]
     public var arrayObject: [SFJSON]? {
@@ -268,7 +212,7 @@ extension SFJSON {
             return nil
         }
     }
-    #endif
+	
 }
 
 // MARK: - Dictionary
@@ -279,16 +223,24 @@ extension SFJSON {
     public var dictionaryObject: NSDictionary? {
         return object as? NSDictionary
     }
-    
-    #if os(Linux)
+
     //Optional [String : Any]
     public var dictionary: [String : Any]? {
-    return object as? [String: Any]
+        return object as? [String: Any]
     }
-    #else
-    //Optional [String : AnyObject]
-    public var dictionary: [String : AnyObject]? {
-        return object as? [String: AnyObject]
-    }
-    #endif
+	
+}
+
+// MARK: - Date
+
+extension SFJSON {
+	
+	//Optional Date
+	public var date: Date? {
+		if let timeInterval = self["$date"].int {
+			return Date(timeIntervalSince1970: Double(timeInterval) / 1000)
+		}else {
+			return nil
+		}
+	}
 }
