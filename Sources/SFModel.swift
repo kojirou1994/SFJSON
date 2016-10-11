@@ -7,9 +7,10 @@
 //
 
 import Foundation
+import SwiftyJSON
 
 public protocol JSONLiteralConvertible {
-	init(json: SFJSON) throws
+	init(json: JSON) throws
 }
 
 public protocol SFModel: JSONLiteralConvertible, JSONSerializable { }
